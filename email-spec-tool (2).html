@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Email Spec Tool — Reach Mobile</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --brand: #2352E0;
+  --bg: #ECEAE4;
+  --surface: #FFFFFF;
+  --border: rgba(0,0,0,0.09);
+  --text: #1C1C18;
+  --muted: #72726E;
+  --sidebar-w: 272px;
+  --topbar-h: 50px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-size: 13px;
+}
+
+/* ─── TOPBAR ─── */
+.topbar {
+  height: var(--topbar-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  gap: 10px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+.tb-title { font-weight: 700; font-size: 13px; }
+.tb-tag { font-size: 11px; color: var(--muted); background: #F0EDE6; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
+.sep { width: 1px; height: 16px; background: var(--border); }
+.tb-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 11px; border: 1px solid var(--border);
+  border-radius: 6px; background: transparent;
+  font-size: 12px; color: var(--muted); cursor: pointer;
+  transition: all .15s; font-family: inherit;
+}
+.tb-btn.on { background: var(--brand); color: #fff; border-color: var(--brand); }
+.tb-btn:hover:not(.on) { border-color: #aaa; color: var(--text); }
+.dev-grp { display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.dev-btn { padding: 5px 12px; border: none; background: transparent; font-size: 12px; color: var(--muted); cursor: pointer; transition: all .15s; font-family: inherit; }
+.dev-btn.on { background: var(--text); color: #fff; }
+
+/* ─── LAYOUT ─── */
+.layout { display: flex; flex: 1; overflow: hidden; }
+
+/* ─── SIDEBAR ─── */
+.sidebar {
+  width: var(--sidebar-w); background: var(--surface);
+  border-right: 1px solid var(--border);
+  overflow-y: auto; flex-shrink: 0;
+  padding: 18px 14px 30px;
+}
+.s-block { margin-bottom: 22px; }
+.s-lbl { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); margin-bottom: 10px; display: block; }
+.upload-area {
+  border: 1.5px dashed rgba(0,0,0,0.14); border-radius: 8px;
+  padding: 18px 10px; text-align: center; cursor: pointer;
+  transition: all .15s; position: relative; background: #fafaf8;
+}
+.upload-area:hover { border-color: var(--brand); background: rgba(35,82,224,.04); }
+.upload-area input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.ua-ico { font-size: 18px; margin-bottom: 4px; line-height: 1; }
+.ua-txt { font-size: 12px; color: var(--muted); }
+.ua-hint { font-size: 10px; color: var(--muted); opacity: .6; margin-top: 2px; }
+.logo-prev { display: none; position: relative; border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center; background: #f8f8f6; }
+.logo-prev img { max-width: 100%; max-height: 50px; object-fit: contain; }
+.rm-logo { position: absolute; top: 5px; right: 5px; width: 20px; height: 20px; border-radius: 50%; background: rgba(0,0,0,.3); color: #fff; border: none; cursor: pointer; font-size: 11px; display: flex; align-items: center; justify-content: center; }
+.f-row { margin-bottom: 11px; }
+.f-lbl { font-size: 11px; color: var(--muted); margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
+.f-lbl b { font-size: 11px; font-weight: 600; color: var(--text); }
+input[type="range"] { width: 100%; accent-color: var(--brand); cursor: pointer; }
+.c-row { display: flex; gap: 8px; align-items: center; }
+.c-row input[type="color"] { width: 36px; height: 32px; flex-shrink: 0; border: 1px solid var(--border); border-radius: 6px; padding: 2px; background: #fff; cursor: pointer; }
+.hex-in { flex: 1; height: 32px; border: 1px solid var(--border); border-radius: 6px; padding: 0 10px; font-size: 12px; font-family: 'SF Mono','Fira Code','Menlo',monospace; color: var(--text); outline: none; background: #fff; }
+.hex-in:focus { border-color: var(--brand); }
+.txt-in { width: 100%; height: 32px; border: 1px solid var(--border); border-radius: 6px; padding: 0 10px; font-size: 12px; color: var(--text); outline: none; background: #fff; font-family: inherit; }
+.txt-in:focus { border-color: var(--brand); }
+.spec-ref { background: #F5F3EE; border-radius: 8px; padding: 12px; font-size: 11px; line-height: 2; color: var(--muted); border: 1px solid rgba(0,0,0,.05); }
+.spec-ref b { color: var(--text); font-weight: 600; }
+.swatch { display: inline-block; width: 11px; height: 11px; border-radius: 2px; border: 1px solid rgba(0,0,0,.12); vertical-align: middle; margin-right: 3px; transition: background .2s; }
+
+/* ─── WHY FIXED SIZE ─── */
+.why-box { display: flex; flex-direction: column; gap: 0; }
+.why-item {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 11px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+.why-item:last-child { border-bottom: none; padding-bottom: 0; }
+.why-ico { font-size: 14px; flex-shrink: 0; margin-top: 1px; line-height: 1; }
+.why-title { font-size: 11px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+.why-body { font-size: 10.5px; color: var(--muted); line-height: 1.6; }
+.why-body code { font-family: 'SF Mono','Fira Code','Menlo',monospace; font-size: 9.5px; background: #F0EDE6; padding: 1px 4px; border-radius: 3px; color: var(--text); }
+.why-body b { color: var(--text); font-weight: 600; }
+
+/* ─── CANVAS ─── */
+.canvas { flex: 1; overflow: auto; display: flex; align-items: flex-start; justify-content: center; padding: 50px 40px 100px; }
+
+/* ─── EMAIL FRAME ─── */
+.e-frame { position: relative; width: 900px; min-height: 900px; flex-shrink: 0; transition: transform .35s ease; transform-origin: top center; }
+.e-frame.mobile { transform: scale(0.57); transform-origin: top center; }
+
+/* ─────────────────────────────────────────
+   THE EMAIL  (left:150, top:50 in frame)
+   600px wide — blue outer shell, white card
+───────────────────────────────────────── */
+.email {
+  position: absolute; left: 150px; top: 50px; width: 600px;
+  box-shadow: 0 8px 48px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Blue outer shell — email page background */
+.em-shell {
+  background: var(--brand);
+  padding: 0 22px 44px;
+  transition: background .25s;
+}
+
+/* White card inside the shell */
+.em-card {
+  background: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+/* 1. Logo section — white bg, centered */
+.em-logo-section {
+  background: #fff;
+  padding: 20px 24px 18px;
+  text-align: center;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+.em-logo-ph { background: #D8D8D8; border-radius: 4px; height: 30px; display: inline-block; transition: width .15s; }
+.em-logo-img { max-height: 60px; object-fit: contain; display: none; transition: width .15s; }
+
+/* 2. Hero section — white bg, DARK text */
+.em-hero-section {
+  background: #fff;
+  padding: 22px 24px 30px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.em-hero-left { flex: 1; }
+.em-badge { display: inline-block; background: #22C55E; color: #fff; font-size: 11px; font-weight: 700; padding: 5px 14px; border-radius: 20px; margin-bottom: 14px; letter-spacing: .1px; }
+.em-headline { color: #111; font-size: 20px; font-weight: 800; line-height: 1.35; }
+.em-illus { flex-shrink: 0; }
+
+/* 3. Body section — light lavender */
+.em-body-section { background: #EEF0F8; padding: 22px 24px 20px; }
+.em-wnext { font-size: 14px; font-weight: 700; text-align: center; margin-bottom: 18px; color: #111; }
+.em-step { display: flex; gap: 14px; margin-bottom: 16px; align-items: flex-start; }
+.em-sico {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: #fff;
+  border: 1px solid rgba(35,82,224,0.18);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.em-stitle { font-size: 12.5px; font-weight: 700; color: #111; margin-bottom: 4px; }
+.em-sbody { font-size: 11.5px; color: #555; line-height: 1.6; }
+.em-dl { margin-top: 18px; padding-top: 18px; border-top: 1px solid rgba(0,0,0,0.07); text-align: center; }
+.em-dllbl { font-size: 13px; font-weight: 700; color: #111; margin-bottom: 12px; }
+.em-apps { display: flex; justify-content: center; gap: 10px; }
+.em-app { background: #111; border-radius: 8px; padding: 7px 14px; display: flex; align-items: center; gap: 7px; color: #fff; font-size: 11px; font-weight: 500; line-height: 1.4; }
+.em-app .tiny { font-size: 7.5px; opacity: .65; display: block; }
+
+/* 4. Footer section — white bg, bordered box */
+.em-footer-section {
+  background: #fff;
+  border-top: 1px solid #E5E7F0;
+  border-bottom: 1px solid #E5E7F0;
+  padding: 16px 24px;
+  text-align: center;
+}
+.em-faqtitle { font-size: 13px; font-weight: 700; color: #111; margin-bottom: 8px; }
+.em-phone { font-size: 13px; font-weight: 700; color: var(--brand); margin-bottom: 3px; transition: color .2s; }
+.em-hours { font-size: 11px; color: #999; }
+
+/* 5. Fine print */
+.em-fine-section { background: #F7F8FC; padding: 14px 24px; text-align: center; }
+.em-fine { font-size: 10px; color: #B0B3C0; line-height: 1.8; }
+
+/* ─── ANNOTATION SVG ─── */
+.ann-svg { position: absolute; top: 0; left: 0; pointer-events: none; transition: opacity .25s; }
+.ann-svg.hidden { opacity: 0; }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <span class="tb-title">Email Spec Tool</span>
+  <span class="tb-tag">Reach Mobile</span>
+  <div class="sep"></div>
+  <button class="tb-btn on" id="specBtn" onclick="toggleSpecs()">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x=".5" y=".5" width="12" height="12" rx="1.5" stroke="currentColor" stroke-width="1.2" fill="none"/><line x1="3" y1="6.5" x2="10" y2="6.5" stroke="currentColor" stroke-width="1.2"/><line x1="6.5" y1="3" x2="6.5" y2="10" stroke="currentColor" stroke-width="1.2"/></svg>
+    Spec annotations
+  </button>
+  <div class="dev-grp">
+    <button class="dev-btn on" id="deskBtn" onclick="setDevice('desktop')">Desktop</button>
+    <button class="dev-btn" id="mobBtn"    onclick="setDevice('mobile')">Mobile</button>
+  </div>
+  <div class="sep"></div>
+  <span style="font-size:11px;color:var(--muted)">Email width: <b style="color:var(--text)">600px</b></span>
+</div>
+
+<div class="layout">
+
+  <!-- ─── SIDEBAR ─── -->
+  <div class="sidebar">
+
+    <div class="s-block">
+      <span class="s-lbl">Brand Logo</span>
+      <div class="upload-area" id="uploadZone">
+        <input type="file" accept="image/*" id="logoFile" onchange="handleLogo(event)">
+        <div class="ua-ico">⬆</div>
+        <div class="ua-txt">Click to upload logo</div>
+        <div class="ua-hint">PNG · SVG · JPG — max 3 MB</div>
+      </div>
+      <div class="logo-prev" id="logoPrev">
+        <img id="logoPrevImg" src="" alt="Logo">
+        <button class="rm-logo" onclick="removeLogo()" title="Remove">✕</button>
+      </div>
+      <div class="f-row" style="margin-top:11px">
+        <div class="f-lbl">Display width <b id="wVal">180px</b></div>
+        <input type="range" id="wRange" min="60" max="280" value="180" oninput="setLogoW(+this.value)">
+      </div>
+    </div>
+
+    <div class="s-block">
+      <span class="s-lbl">Brand Colors</span>
+      <div class="f-row">
+        <div class="f-lbl">Primary color</div>
+        <div class="c-row">
+          <input type="color" id="cPicker" value="#2352E0" oninput="setColor(this.value,'picker')">
+          <input type="text" class="hex-in" id="cHex" value="#2352E0" maxlength="7" oninput="setColor(this.value,'hex')" placeholder="#000000" spellcheck="false">
+        </div>
+      </div>
+    </div>
+
+    <div class="s-block">
+      <span class="s-lbl">Email Content</span>
+      <div class="f-row">
+        <div class="f-lbl">Order ID</div>
+        <input class="txt-in" id="orderIn" value="2345989A" oninput="$('emBadge').textContent='Order ID: '+this.value">
+      </div>
+      <div class="f-row">
+        <div class="f-lbl">Headline</div>
+        <input class="txt-in" id="headIn" value="Thank you for choosing Reach Mobile. Your order is placed." oninput="$('emHead').textContent=this.value">
+      </div>
+      <div class="f-row">
+        <div class="f-lbl">Support phone</div>
+        <input class="txt-in" id="phoneIn" value="(844) 445-3665" oninput="syncPhone(this.value)">
+      </div>
+    </div>
+
+    <div class="s-block">
+      <span class="s-lbl">Spec Reference</span>
+      <div class="spec-ref">
+        <div>📏 Email width: <b>600px</b></div>
+        <div>🃏 Card width: <b>556px</b> (22px margins)</div>
+        <div>🖼 Logo max: <b>200 × 60px</b></div>
+        <div>📱 Upload <b>@2×</b> for retina</div>
+        <div>🎨 Outer bg: <span class="swatch" id="srSwatch" style="background:#2352E0"></span><b id="srHex">#2352E0</b></div>
+        <div>📄 Format: <b>PNG transparent</b></div>
+        <div>💡 HubSpot: set <b>width in editor</b></div>
+        <div>♿ Always set <b>alt text</b></div>
+      </div>
+    </div>
+
+    <div class="s-block">
+      <span class="s-lbl">Why fixed logo size?</span>
+      <div class="why-box">
+
+        <div class="why-item">
+          <span class="why-ico">⚠️</span>
+          <div>
+            <div class="why-title">Email clients don't scale reliably</div>
+            <div class="why-body">Outlook (desktop) ignores CSS width rules and renders images at their actual file size. A 600px PNG will break the layout entirely — only a fixed <code>width</code> attribute on the <code>&lt;img&gt;</code> tag is respected across all clients.</div>
+          </div>
+        </div>
+
+        <div class="why-item">
+          <span class="why-ico">🔍</span>
+          <div>
+            <div class="why-title">HubSpot auto-resize blurs logos</div>
+            <div class="why-body">HubSpot compresses images on upload. Letting it scale a large logo down often produces a blurry result, especially on logos with fine text. Uploading at the exact display size — or a clean @2× file — bypasses this entirely.</div>
+          </div>
+        </div>
+
+        <div class="why-item">
+          <span class="why-ico">📱</span>
+          <div>
+            <div class="why-title">Retina screens need a 2× file</div>
+            <div class="why-body">iPhones, MacBooks, and most Android flagships use high-DPI displays. A 200px logo file looks soft on retina screens. Supply a 400px file but constrain it to 200px in HubSpot's width field to stay crisp everywhere.</div>
+          </div>
+        </div>
+
+        <div class="why-item">
+          <span class="why-ico">🎨</span>
+          <div>
+            <div class="why-title">Consistent brand proportions</div>
+            <div class="why-body">A logo too tall pushes the headline below the fold on mobile. Too wide, it dominates the header. The <b>200 × 60px</b> cap keeps the logo proportionate and intentional across every screen size and email client.</div>
+          </div>
+        </div>
+
+        <div class="why-item">
+          <span class="why-ico">🚫</span>
+          <div>
+            <div class="why-title">Some clients block images by default</div>
+            <div class="why-body">Outlook and many corporate clients hide images until the user clicks "Download images." A fixed-size slot with descriptive <b>alt text</b> (e.g. "Reach Mobile") keeps the layout intact and the brand name readable even when the logo is invisible.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /sidebar -->
+
+  <!-- ─── CANVAS ─── -->
+  <div class="canvas">
+    <div class="e-frame" id="eFrame">
+
+      <!-- ═════════════════════════════
+           THE EMAIL
+      ══════════════════════════════ -->
+      <div class="email" id="emailEl">
+        <div class="em-shell" id="emShell">
+          <div class="em-card">
+
+            <!-- 1 · Logo -->
+            <div class="em-logo-section">
+              <div class="em-logo-ph" id="emLogoPH" style="width:180px"></div>
+              <img class="em-logo-img" id="emLogoImg" src="" alt="Reach Mobile">
+            </div>
+
+            <!-- 2 · Hero (white bg, dark text) -->
+            <div class="em-hero-section">
+              <div class="em-hero-left">
+                <span class="em-badge" id="emBadge">Order ID: 2345989A</span>
+                <div class="em-headline" id="emHead">Thank you for choosing Reach Mobile. Your order is placed.</div>
+              </div>
+              <!-- Phone illustration -->
+              <div class="em-illus" id="emIllus">
+                <svg width="148" height="152" viewBox="0 0 148 152" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <!-- Soft bg circle -->
+                  <circle cx="76" cy="82" r="62" fill="#F0F2F8"/>
+                  <!-- Coral decorative circle -->
+                  <circle cx="128" cy="28" r="17" fill="rgba(255,120,100,.3)"/>
+                  <!-- Sparkle top-left -->
+                  <path d="M20 24 L22.5 17 L25 24 L32 26.5 L25 29 L22.5 36 L20 29 L13 26.5 Z" fill="#CACFE0"/>
+                  <!-- Sparkle bottom-right (red-ish) -->
+                  <path d="M122 108 L123.8 103 L125.6 108 L130.5 109.8 L125.6 111.6 L123.8 116.5 L122 111.6 L117 109.8 Z" fill="rgba(220,60,60,.4)"/>
+                  <!-- Plus sign -->
+                  <text x="136" y="50" fill="rgba(200,60,60,.4)" font-size="14" font-family="sans-serif" font-weight="300">+</text>
+                  <text x="8"   y="110" fill="rgba(160,165,185,.6)" font-size="10" font-family="sans-serif" font-weight="300">+</text>
+                  <!-- Triangle outline -->
+                  <polygon points="16,105 24,90 32,105" stroke="#B0B6CC" stroke-width="1.5" fill="none"/>
+                  <!-- Phone body -->
+                  <rect x="28" y="12" width="70" height="108" rx="8" fill="white" stroke="#C8CCDA" stroke-width="1.5"/>
+                  <!-- Screen - image area -->
+                  <rect x="35" y="21" width="56" height="48" rx="3" fill="#E8EAF2"/>
+                  <!-- Mountain shapes -->
+                  <polygon points="38,65 52,44 66,65" fill="#D0D4E4"/>
+                  <polygon points="54,65 65,50 76,65" fill="#C0C6D8"/>
+                  <!-- Sun -->
+                  <circle cx="40" cy="30" r="6" fill="#D8DAE8"/>
+                  <!-- Content lines -->
+                  <line x1="35" y1="77" x2="85" y2="77" stroke="#CDD0DE" stroke-width="1.5" stroke-linecap="round"/>
+                  <line x1="35" y1="86" x2="85" y2="86" stroke="#D4D7E4" stroke-width="1.5" stroke-linecap="round"/>
+                  <line x1="35" y1="95" x2="70" y2="95" stroke="#D8DAE6" stroke-width="1.5" stroke-linecap="round"/>
+                  <!-- Phone home indicator -->
+                  <rect x="50" y="109" width="26" height="4" rx="2" fill="#D0D3E0"/>
+                  <!-- Green checkmark circle -->
+                  <circle cx="90" cy="112" r="24" fill="#22C55E"/>
+                  <path d="M80 112 L88 120 L103 103" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                </svg>
+              </div>
+            </div><!-- /em-hero-section -->
+
+            <!-- 3 · Body (lavender) -->
+            <div class="em-body-section">
+              <div class="em-wnext">What's Next?</div>
+
+              <div class="em-step">
+                <div class="em-sico" id="emSico1">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <rect x="2" y="1" width="14" height="16" rx="2" stroke="#2352E0" stroke-width="1.3" class="bc-s"/>
+                    <rect x="5" y="3" width="8" height="2" rx="1" fill="#2352E0" class="bc-f"/>
+                    <line x1="5" y1="9"  x2="13" y2="9"  stroke="#2352E0" stroke-width="1.1" class="bc-s"/>
+                    <line x1="5" y1="12" x2="13" y2="12" stroke="#2352E0" stroke-width="1.1" class="bc-s"/>
+                    <line x1="5" y1="15" x2="10" y2="15" stroke="#2352E0" stroke-width="1.1" class="bc-s"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="em-stitle">For Physical SIM(S):</div>
+                  <div class="em-sbody">Your Reach Mobile Welcome Kit will be dispatched shortly. Once shipped, you'll get tracking details by email. Meanwhile, download the app to access the step-by-step activation instructions to activate your SIM(s) upon arrival.</div>
+                </div>
+              </div>
+
+              <div class="em-step">
+                <div class="em-sico" id="emSico2">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <rect x="1" y="1" width="16" height="16" rx="2" stroke="#2352E0" stroke-width="1.3" class="bc-s"/>
+                    <rect x="3.5" y="3.5" width="4"   height="4"   rx=".5" fill="#2352E0" class="bc-f"/>
+                    <rect x="10.5" y="3.5" width="4" height="4"   rx=".5" fill="#2352E0" class="bc-f"/>
+                    <rect x="3.5" y="10.5" width="4" height="4"   rx=".5" fill="#2352E0" class="bc-f"/>
+                    <rect x="7"   y="7"   width="4"   height="4"   rx=".5" fill="#2352E0" class="bc-f"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="em-stitle">For ESIM(S):</div>
+                  <div class="em-sbody">Use the app for initial activation. Then, check your email for the QR code to set up your eSIM.</div>
+                </div>
+              </div>
+
+              <div class="em-dl">
+                <div class="em-dllbl">Download Our App</div>
+                <div class="em-apps">
+                  <div class="em-app">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-1.85c.539.309.8.815.8 1.143 0 .328-.26.834-.8 1.143l-2.003 1.158-2.513-2.513 2.513-2.513 2.003 1.582zM5.864 2.658L16.8 9l-2.302 2.302-8.635-8.644z" fill="white"/>
+                    </svg>
+                    <div><span class="tiny">GET IT ON</span>Google Play</div>
+                  </div>
+                  <div class="em-app">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                    <div><span class="tiny">Download on the</span>App Store</div>
+                  </div>
+                </div>
+              </div>
+            </div><!-- /em-body-section -->
+
+            <!-- 4 · Footer -->
+            <div class="em-footer-section">
+              <div class="em-faqtitle">Have Questions?</div>
+              <div class="em-phone" id="emPhone">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="vertical-align:-2px;margin-right:4px"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 00-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.12-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z" fill="#2352E0" class="bc-f2"/></svg>
+                Reach out to us at <b id="emPhoneNum">(844) 445-3665</b>
+              </div>
+              <div class="em-hours">Monday – Friday (9AM – 5PM EST) For Help</div>
+            </div>
+
+            <!-- 5 · Fine print -->
+            <div class="em-fine-section">
+              <div class="em-fine">
+                This mobile service is provided by Reach Mobile.<br>
+                6 Omni Way, Chelmsford, MA, 01824.<br>
+                © 2025. All rights reserved.
+              </div>
+            </div>
+
+          </div><!-- /em-card -->
+        </div><!-- /em-shell -->
+      </div><!-- /email -->
+
+      <!-- ═════════════════════════════
+           ANNOTATION SVG OVERLAY
+           Email at x=150, y=50 in frame
+           Outer shell: padding 0 22px 44px
+           Card: left=172 (150+22), width=556
+           ─────────────────────────────
+           Section y-coords (approx):
+           Logo top:  50+0 = 50  (no top padding in shell)
+           Logo h:    68px → bottom: 118
+           Hero top:  118
+           Hero h:    190px → bottom: 308
+           Body top:  308
+           Body h:    290px → bottom: 598
+           Footer top: 598, h: 90, bottom: 688
+           FP top:    688, h: 74, bottom: 762
+           Shell bot: 762+44 = 806
+      ══════════════════════════════ -->
+      <svg class="ann-svg" id="annSvg"
+           viewBox="0 0 900 870"
+           style="width:900px;height:870px;overflow:visible;"
+           xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="dot" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5">
+            <circle cx="2.5" cy="2.5" r="2" fill="rgba(0,0,0,.32)"/>
+          </marker>
+        </defs>
+
+        <!-- ── 1. LOGO DIM BRACKET (above card top at y=50) ──
+             Card starts at x=172. Logo 180px centered in 556px:
+             logo_x = 172 + (556-180)/2 = 172 + 188 = 360
+             logo_x_end = 360 + 180 = 540
+        -->
+        <line id="dimTickL" x1="360" y1="28" x2="360" y2="47" stroke="rgba(35,82,224,.7)" stroke-width="1"/>
+        <line id="dimTickR" x1="540" y1="28" x2="540" y2="47" stroke="rgba(35,82,224,.7)" stroke-width="1"/>
+        <line id="dimBar"   x1="360" y1="37" x2="540" y2="37" stroke="rgba(35,82,224,.7)" stroke-width="1"/>
+        <rect id="dimPill" x="423" y="28" width="54" height="18" rx="3.5" fill="#2352E0"/>
+        <text id="dimTxt"  x="450" y="41" text-anchor="middle" fill="white" font-size="10" font-weight="700" font-family="-apple-system,sans-serif">180px</text>
+
+        <!-- Brand Logo label top-right, line diagonal to logo area -->
+        <line x1="610" y1="8"  x2="610" y2="16" stroke="rgba(0,0,0,.18)" stroke-width="0.8"/>
+        <line x1="610" y1="16" x2="545" y2="16" stroke="rgba(0,0,0,.18)" stroke-width="0.8"/>
+        <line x1="545" y1="16" x2="545" y2="47" stroke="rgba(0,0,0,.18)" stroke-width="0.8" marker-end="url(#dot)"/>
+        <text x="614" y="12" fill="#1C1C18" font-size="11" font-weight="600" font-family="-apple-system,sans-serif">Brand Logo</text>
+        <text x="614" y="24" fill="#72726E" font-size="10" font-family="-apple-system,sans-serif">PNG/SVG · transparent bg</text>
+        <text x="614" y="35" fill="#72726E" font-size="10" font-family="-apple-system,sans-serif">Upload <tspan font-weight="600" fill="#1C1C18">@2×</tspan> for retina · max height <tspan font-weight="600" fill="#1C1C18">60px</tspan></text>
+
+        <!-- ── 2. OUTER SHELL COLOR — right, pointing to blue shell ──
+             Shell is visible at right side x=750 (150+600)
+             At y≈200 (mid-hero within the shell)
+        -->
+        <line x1="750" y1="200" x2="772" y2="200" stroke="rgba(0,0,0,.18)" stroke-width="0.8" marker-start="url(#dot)"/>
+        <text x="776" y="196" fill="#1C1C18" font-size="11" font-weight="600" font-family="-apple-system,sans-serif">Brand primary color</text>
+        <rect id="chip1" x="776" y="199" width="62" height="17" rx="3" fill="#2352E0"/>
+        <text id="chip1Txt" x="807" y="211" text-anchor="middle" fill="white" font-size="9.5" font-weight="700" font-family="'SF Mono',monospace">#2352E0</text>
+        <text x="776" y="228" fill="#72726E" font-size="10" font-family="-apple-system,sans-serif">Outer shell background</text>
+
+        <!-- ── 3. PHONE ILLUSTRATION — right ──
+             Illustration approx right at x=728 (150+22+556), y≈215
+        -->
+        <line x1="750" y1="148" x2="772" y2="148" stroke="rgba(0,0,0,.18)" stroke-width="0.8" marker-start="url(#dot)"/>
+        <text x="776" y="152" fill="#1C1C18" font-size="11" font-weight="600" font-family="-apple-system,sans-serif">Generic icon</text>
+        <text x="776" y="164" fill="#72726E" font-size="10" font-family="-apple-system,sans-serif">Order confirmation illustration</text>
+
+        <!-- ── 4. WHITE CARD NOTE — right, card outline ──
+             Card right edge at x=728, visible against blue at top
+        -->
+        <line x1="728" y1="84" x2="772" y2="84" stroke="rgba(0,0,0,.18)" stroke-width="0.8" marker-start="url(#dot)"/>
+        <text x="776" y="80" fill="#1C1C18" font-size="11" font-weight="600" font-family="-apple-system,sans-serif">White card</text>
+        <text x="776" y="92" fill="#72726E" font-size="10" font-family="-apple-system,sans-serif">556px wide · radius 14px</text>
+
+        <!-- ── 5. BRAND PRIMARY — left (SIM step icons in body) ──
+             Step icon: card left x=172, padding 24px → icon at x=196
+             Body y≈308, padding 22px → step at y≈330, icon center y≈348
+        -->
+        <line x1="172" y1="348" x2="148" y2="348" stroke="rgba(0,0,0,.18)" stroke-width="0.8" marker-start="url(#dot)"/>
+        <line x1="148" y1="348" x2="148" y2="336" stroke="rgba(0,0,0,.18)" stroke-width="0.8"/>
+        <text x="144" y="332" text-anchor="end" fill="#1C1C18" font-size="11" font-weight="600" font-family="-apple-system,sans-serif">Brand primary color</text>
+        <rect id="chip2" x="76" y="334" width="62" height="17" rx="3" fill="#2352E0"/>
+        <text id="chip2Txt" x="107" y="346" text-anchor="middle" fill="white" font-size="9.5" font-weight="700" font-family="'SF Mono',monospace">#2352E0</text>
+        <text x="144" y="360" text-anchor="end" fill="#72726E" font-size="10" font-family="-apple-system,sans-serif">Icon stroke + fill</text>
+
+        <!-- ── 6. LAVENDER BODY BG — left ──
+             Body section left edge x=172, mid y≈453
+        -->
+        <line x1="172" y1="453" x2="148" y2="453" stroke="rgba(0,0,0,.18)" stroke-width="0.8" marker-start="url(#dot)"/>
+        <line x1="148" y1="453" x2="148" y2="443" stroke="rgba(0,0,0,.18)" stroke-width="0.8"/>
+        <text x="144" y="439" text-anchor="end" fill="#1C1C18" font-size="11" font-weight="600" font-family="-apple-system,sans-serif">Body background</text>
+        <rect x="76" y="441" width="62" height="17" rx="3" fill="#EEF0F8" stroke="rgba(0,0,0,.12)" stroke-width="0.8"/>
+        <text x="107" y="453" text-anchor="middle" fill="#555" font-size="9.5" font-weight="700" font-family="'SF Mono',monospace">#EEF0F8</text>
+
+        <!-- ── 7. BRAND PRIMARY — left (footer phone link) ──
+             Footer: y≈598, phone y≈598+16+14+10=638, center y≈644
+        -->
+        <line x1="172" y1="638" x2="148" y2="638" stroke="rgba(0,0,0,.18)" stroke-width="0.8" marker-start="url(#dot)"/>
+        <line x1="148" y1="638" x2="148" y2="628" stroke="rgba(0,0,0,.18)" stroke-width="0.8"/>
+        <text x="144" y="624" text-anchor="end" fill="#1C1C18" font-size="11" font-weight="600" font-family="-apple-system,sans-serif">Brand primary color</text>
+        <rect id="chip3" x="76" y="626" width="62" height="17" rx="3" fill="#2352E0"/>
+        <text id="chip3Txt" x="107" y="638" text-anchor="middle" fill="white" font-size="9.5" font-weight="700" font-family="'SF Mono',monospace">#2352E0</text>
+        <text x="144" y="650" text-anchor="end" fill="#72726E" font-size="10" font-family="-apple-system,sans-serif">Phone link color</text>
+
+        <!-- ── 8. EMAIL WIDTH BRACKET — bottom ──
+             Email outer: x=150 to x=750
+        -->
+        <line x1="150" y1="832" x2="150" y2="848" stroke="rgba(35,82,224,.5)" stroke-width="1"/>
+        <line x1="750" y1="832" x2="750" y2="848" stroke="rgba(35,82,224,.5)" stroke-width="1"/>
+        <line x1="150" y1="840" x2="750" y2="840" stroke="rgba(35,82,224,.5)" stroke-width="1"/>
+        <rect x="392" y="832" width="66" height="18" rx="3.5" fill="rgba(35,82,224,.75)"/>
+        <text x="425" y="845" text-anchor="middle" fill="white" font-size="10" font-weight="700" font-family="-apple-system,sans-serif">600px wide</text>
+
+      </svg><!-- /annSvg -->
+
+    </div><!-- /e-frame -->
+  </div><!-- /canvas -->
+
+</div><!-- /layout -->
+
+<script>
+// ─── HELPERS ─────────────────────────────
+function $(id) { return document.getElementById(id); }
+function setAttr(id, attrs) { const el=$(id); if(!el) return; Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v)); }
+
+// ─── STATE ────────────────────────────────
+let color = '#2352E0';
+let logoW = 180;
+let specsOn = true;
+
+// ─── SPEC TOGGLE ─────────────────────────
+function toggleSpecs() {
+  specsOn = !specsOn;
+  $('annSvg').classList.toggle('hidden', !specsOn);
+  $('specBtn').classList.toggle('on', specsOn);
+}
+
+// ─── DEVICE TOGGLE ───────────────────────
+function setDevice(d) {
+  $('eFrame').classList.toggle('mobile', d === 'mobile');
+  $('deskBtn').classList.toggle('on', d === 'desktop');
+  $('mobBtn').classList.toggle('on', d === 'mobile');
+}
+
+// ─── LOGO UPLOAD ─────────────────────────
+function handleLogo(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 3*1024*1024) { alert('File too large. Max 3 MB.'); return; }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const src = ev.target.result;
+    $('emLogoPH').style.display = 'none';
+    const img = $('emLogoImg');
+    img.src = src; img.style.display = 'inline-block'; img.style.width = logoW + 'px';
+    $('logoPrevImg').src = src;
+    $('uploadZone').style.display = 'none';
+    $('logoPrev').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeLogo() {
+  $('emLogoImg').style.display = 'none'; $('emLogoImg').src = '';
+  $('emLogoPH').style.display = 'inline-block';
+  $('uploadZone').style.display = 'block'; $('logoPrev').style.display = 'none';
+  $('logoFile').value = '';
+}
+
+// ─── LOGO WIDTH ───────────────────────────
+function setLogoW(val) {
+  logoW = val;
+  $('wVal').textContent = val + 'px';
+  $('emLogoPH').style.width = val + 'px';
+  const img = $('emLogoImg');
+  if (img.src && img.style.display !== 'none') img.style.width = val + 'px';
+  // Update dim bracket
+  // Logo centered in 556px card: x_start = 172 + (556-val)/2
+  const cx = 172 + (556 - val) / 2;
+  const rx = cx + val;
+  const mx = cx + val / 2;
+  setAttr('dimTickL', { x1: cx, x2: cx });
+  setAttr('dimTickR', { x1: rx, x2: rx });
+  setAttr('dimBar',   { x1: cx, x2: rx });
+  setAttr('dimPill',  { x: mx - 27 });
+  const txt = $('dimTxt');
+  txt.setAttribute('x', mx);
+  txt.textContent = val + 'px';
+}
+
+// ─── COLOR ────────────────────────────────
+function setColor(hex, source) {
+  if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) return;
+  color = hex.toUpperCase();
+  if (source !== 'picker') $('cPicker').value = hex;
+  if (source !== 'hex')    $('cHex').value = color;
+  // Email
+  $('emShell').style.background = hex;
+  $('emPhone').style.color = hex;
+  // SVG brand strokes/fills
+  document.querySelectorAll('.bc-s').forEach(el => el.setAttribute('stroke', hex));
+  document.querySelectorAll('.bc-f').forEach(el => el.setAttribute('fill', hex));
+  document.querySelectorAll('.bc-f2').forEach(el => el.setAttribute('fill', hex));
+  // Annotation chips
+  ['chip1','chip2','chip3'].forEach(id => $( id).setAttribute('fill', hex));
+  ['chip1Txt','chip2Txt','chip3Txt'].forEach(id => { $(id).textContent = color; });
+  // Spec sidebar
+  $('srHex').textContent = color;
+  $('srSwatch').style.background = hex;
+}
+
+function syncPhone(val) {
+  $('emPhoneNum').textContent = val;
+}
+
+// ─── INPUT WIRING ─────────────────────────
+$('cPicker').addEventListener('input', function() { setColor(this.value, 'picker'); $('cHex').value = this.value.toUpperCase(); });
+$('cHex').addEventListener('input', function() { setColor(this.value, 'hex'); });
+</script>
+</body>
+</html>
